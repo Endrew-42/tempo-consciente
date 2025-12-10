@@ -1,13 +1,25 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
+import { TimeProvider } from '@/contexts/TimeContext';
+import { Navigation } from '@/components/Navigation';
+import { BlockScreen } from '@/components/BlockScreen';
+import { Dashboard } from '@/screens/Dashboard';
+import { Settings } from '@/screens/Settings';
+import { History } from '@/screens/History';
 
-const Index = () => {
+const Index: React.FC = () => {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+    <TimeProvider>
+      <div className="min-h-screen bg-background">
+        <BlockScreen />
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/configuracoes" element={<Settings />} />
+          <Route path="/historico" element={<History />} />
+        </Routes>
+        <Navigation />
       </div>
-    </div>
+    </TimeProvider>
   );
 };
 
