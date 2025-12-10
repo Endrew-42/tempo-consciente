@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { TimeManager } from '@/services/timeManager';
 import { UsageState, Settings } from '@/models/types';
 import { storageService } from '@/services/storageService';
+import { capacitorService } from '@/services/capacitorService';
 
 interface TimeContextType {
   state: UsageState;
@@ -28,7 +29,18 @@ export const TimeProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsBlocked(true);
   }, []);
 
+  const startSession = useCallback(() => {
+    managerRef.current?.startSession();
+  }, []);
+
+  const pauseSession = useCallback(() => {
+    managerRef.current?.pauseSession();
+  }, []);
+
   useEffect(() => {
+    // Initialize Capacitor services
+    capacitorService.initialize();
+
     const manager = new TimeManager(setState, handleLimitReached);
     managerRef.current = manager;
     setState(manager.getState());
@@ -37,16 +49,25 @@ export const TimeProvider: React.FC<{ children: React.ReactNode }> = ({ children
       manager.tick();
     }, 1000);
 
+    // Setup app state listeners for native platforms
+    capacitorService.setupAppStateListener(
+      () => {
+        // App came to foreground - consider as active
+        startSession();
+      },
+      () => {
+        // App went to background - consider as inactive
+        pauseSession();
+      }
+    );
+
+    // Handle Android back button
+    capacitorService.setupBackButton(() => {
+      // Optionally minimize app or show exit confirmation
+    });
+
     return () => clearInterval(interval);
-  }, [handleLimitReached]);
-
-  const startSession = useCallback(() => {
-    managerRef.current?.startSession();
-  }, []);
-
-  const pauseSession = useCallback(() => {
-    managerRef.current?.pauseSession();
-  }, []);
+  }, [handleLimitReached, startSession, pauseSession]);
 
   const useEmergency = useCallback(() => {
     const success = managerRef.current?.useEmergency() ?? false;
